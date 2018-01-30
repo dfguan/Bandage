@@ -15,7 +15,6 @@
 //You should have received a copy of the GNU General Public License
 //along with Bandage.  If not, see <http://www.gnu.org/licenses/>.
 
-
 #include "assemblygraph.h"
 #include <QMapIterator>
 #include "../program/globals.h"
@@ -576,199 +575,371 @@ void AssemblyGraph::buildDeBruijnGraphFromGfa(QString fullFileName, bool *unsupp
         std::vector<QString> edgeStartingNodeNames;
         std::vector<QString> edgeEndingNodeNames;
         std::vector<int> edgeOverlaps;
+		double gfa_vn = -1;
 
         QMap<QString, QColor> colours;
         QMap<QString, QString> labels;
 
-        QTextStream in(&inputFile);
-        while (!in.atEnd()) {
-            QApplication::processEvents();
-            QString line = in.readLine();
+        QTextStream in(&inputFile); 
+		if (!in.atEnd()) {
+			QString frst_ln = in.readLine();
+			QStringList frst_ln_parts = frst_ln.split(QRegExp("\t"));
+			if (frst_ln_parts.at(0) != "H") 
+				throw "load error";
+			else {
+				for (int i = 1; i < frst_ln_parts.size(); ++i) {
+					QString part = frst_ln_parts.at(i);
+					if (part.size() < 6)
+						continue;
+					if (part.left(5) == "VN:Z:") {
+						gfa_vn = part.right(3).toDouble();
+						continue;
+					} else 
+						if (part.left(5) != "bn:Z:") continue;
+					QString bandageOptionsString = part.right(part.length() - 5);
+					QStringList bandageOptions = bandageOptionsString.split(' ', QString::SkipEmptyParts);
+					QStringList bandageOptionsCopy = bandageOptions;
+					*bandageOptionsError = checkForInvalidOrExcessSettings(&bandageOptionsCopy);
+					if (bandageOptionsError->length() == 0)
+						parseSettings(bandageOptions);
+				}
+			}
+		}
+		//QMessageBox::information(this, "VN number",QString::number(gfa_vn)); 
+		if ( gfa_vn > 0.0  && gfa_vn <= 1.0) {
+			//load gfa1	
+            while (!in.atEnd()) {
+				QApplication::processEvents();
+				QString line = in.readLine();
 
-            QStringList lineParts = line.split(QRegExp("\t"));
+				QStringList lineParts = line.split(QRegExp("\t"));
 
-            if (lineParts.size() < 1)
-                continue;
+				if (lineParts.size() < 1)
+					continue;
+				//Lines beginning with "S" are sequence (node) lines.
+				if (lineParts.at(0) == "S") {
+					if (lineParts.size() < 3)
+						throw "load error";
 
-            //Lines beginning with "H" are header lines.
-            if (lineParts.at(0) == "H") {
+					QString nodeName = lineParts.at(1);
+					if (nodeName.isEmpty())
+						nodeName = "node";
 
-                // Check for a tag containing Bandage options.
-                for (int i = 1; i < lineParts.size(); ++i) {
-                    QString part = lineParts.at(i);
-                    if (part.size() < 6)
-                        continue;
-                    if (part.left(5) != "bn:Z:")
-                        continue;
-                    QString bandageOptionsString = part.right(part.length() - 5);
-                    QStringList bandageOptions = bandageOptionsString.split(' ', QString::SkipEmptyParts);
-                    QStringList bandageOptionsCopy = bandageOptions;
-                    *bandageOptionsError = checkForInvalidOrExcessSettings(&bandageOptionsCopy);
-                    if (bandageOptionsError->length() == 0)
-                        parseSettings(bandageOptions);
-                }
-            }
+					QByteArray sequence = lineParts.at(2).toLocal8Bit();
 
-            //Lines beginning with "S" are sequence (node) lines.
-            if (lineParts.at(0) == "S") {
-                if (lineParts.size() < 3)
-                    throw "load error";
+					//Get the tags.
+					bool kcFound = false, rcFound = false, fcFound = false, dpFound = false;
+					double kc = 0.0, rc = 0.0, fc = 0.0, dp = 0.0;
+					int ln = 0;
+					QString lb, l2;
+					QColor cl, c2;
+					for (int i = 3; i < lineParts.size(); ++i) {
+						QString part = lineParts.at(i);
+						if (part.size() < 6)
+							continue;
+						if (part.at(2) != ':')
+							continue;
+						QString tag = part.left(2).toUpper();
+						QString valString = part.right(part.length() - 5);
+						if (tag == "KC") {
+							kcFound = true;
+							kc = valString.toDouble();
+						}
+						if (tag == "RC") {
+							rcFound = true;
+							rc = valString.toDouble();
+						}
+						if (tag == "FC") {
+							fcFound = true;
+							fc = valString.toDouble();
+						}
+						if (tag == "DP") {
+							dpFound = true;
+							dp = valString.toDouble();
+						}
+						if (tag == "LN")
+							ln = valString.toInt();
+						if (tag == "LB")
+							lb = valString;
+						if (tag == "CL")
+							cl = QColor(valString);
+						if (tag == "L2")
+							l2 = valString;
+						if (tag == "C2")
+							c2 = QColor(valString);
+					}
 
-                QString nodeName = lineParts.at(1);
-                if (nodeName.isEmpty())
-                    nodeName = "node";
+					//GFA can use * to indicate that the sequence is not in the
+					//file.  In this case, try to use the LN tag for length.  If
+					//that's not available, use a length of 0.
+					//If there is a sequence, then the LN tag will be ignored.
+					int length;
+					if (sequence == "*" || sequence == "") {
+						length = ln;
+						sequence = "";
+					}
+					else
+						length = sequence.length();
 
-                QByteArray sequence = lineParts.at(2).toLocal8Bit();
+					//If there is an attribute holding the depth, we'll use that.
+					//If there isn't, then we'll use 1.0.
+					//We try to load 'DP' (depth), 'KC' (k-mer count), 'RC'
+					//(read count) or 'FC'(fragment count) in that order of
+					//preference.
+					//If we use KC, RC or FC for the depth, then that is really a
+					//count, so we need to divide by the sequence length to get the
+					//depth.
+					//We also remember which tag was used so if the graph is saved
+					//we can use the same tag in the output.
+					double nodeDepth = 1.0;
+					if (dpFound) {
+						m_depthTag = "DP";
+						nodeDepth = dp;
+					}
+					else if (kcFound) {
+						m_depthTag = "KC";
+						if (length > 0)
+							nodeDepth = kc / length;
+					}
+					else if (rcFound) {
+						m_depthTag = "RC";
+						if (length > 0)
+							nodeDepth = rc / length;
+					}
+					else if (fcFound) {
+						m_depthTag = "FC";
+						if (length > 0)
+							nodeDepth = fc / length;
+					}
 
-                //Get the tags.
-                bool kcFound = false, rcFound = false, fcFound = false, dpFound = false;
-                double kc = 0.0, rc = 0.0, fc = 0.0, dp = 0.0;
-                int ln = 0;
-                QString lb, l2;
-                QColor cl, c2;
-                for (int i = 3; i < lineParts.size(); ++i) {
-                    QString part = lineParts.at(i);
-                    if (part.size() < 6)
-                        continue;
-                    if (part.at(2) != ':')
-                        continue;
-                    QString tag = part.left(2).toUpper();
-                    QString valString = part.right(part.length() - 5);
-                    if (tag == "KC") {
-                        kcFound = true;
-                        kc = valString.toDouble();
-                    }
-                    if (tag == "RC") {
-                        rcFound = true;
-                        rc = valString.toDouble();
-                    }
-                    if (tag == "FC") {
-                        fcFound = true;
-                        fc = valString.toDouble();
-                    }
-                    if (tag == "DP") {
-                        dpFound = true;
-                        dp = valString.toDouble();
-                    }
-                    if (tag == "LN")
-                        ln = valString.toInt();
-                    if (tag == "LB")
-                        lb = valString;
-                    if (tag == "CL")
-                        cl = QColor(valString);
-                    if (tag == "L2")
-                        l2 = valString;
-                    if (tag == "C2")
-                        c2 = QColor(valString);
-                }
+					//We check to see if the node ended in a "+" or "-".
+					//If so, we assume that is giving the orientation and leave it.
+					//And if it doesn't end in a "+" or "-", we assume "+" and add
+					//that to the node name.
+					QString lastChar = nodeName.right(1);
+					if (lastChar != "+" && lastChar != "-")
+						nodeName += "+";
 
-                //GFA can use * to indicate that the sequence is not in the
-                //file.  In this case, try to use the LN tag for length.  If
-                //that's not available, use a length of 0.
-                //If there is a sequence, then the LN tag will be ignored.
-                int length;
-                if (sequence == "*" || sequence == "") {
-                    length = ln;
-                    sequence = "";
-                }
-                else
-                    length = sequence.length();
+					// Canu nodes start with "tig" which we can remove for simplicity.
+					nodeName = simplifyCanuNodeName(nodeName);
 
-                //If there is an attribute holding the depth, we'll use that.
-                //If there isn't, then we'll use 1.0.
-                //We try to load 'DP' (depth), 'KC' (k-mer count), 'RC'
-                //(read count) or 'FC'(fragment count) in that order of
-                //preference.
-                //If we use KC, RC or FC for the depth, then that is really a
-                //count, so we need to divide by the sequence length to get the
-                //depth.
-                //We also remember which tag was used so if the graph is saved
-                //we can use the same tag in the output.
-                double nodeDepth = 1.0;
-                if (dpFound) {
-                    m_depthTag = "DP";
-                    nodeDepth = dp;
-                }
-                else if (kcFound) {
-                    m_depthTag = "KC";
-                    if (length > 0)
-                        nodeDepth = kc / length;
-                }
-                else if (rcFound) {
-                    m_depthTag = "RC";
-                    if (length > 0)
-                        nodeDepth = rc / length;
-                }
-                else if (fcFound) {
-                    m_depthTag = "FC";
-                    if (length > 0)
-                        nodeDepth = fc / length;
-                }
+					//Save custom colours and labels to be applied later, after
+					//reverse complement nodes are built.
+					if (cl.isValid()) {
+						*customColours = true;
+						colours.insert(nodeName, cl);
+					}
+					if (c2.isValid()) {
+						*customColours = true;
+						colours.insert(getOppositeNodeName(nodeName), c2);
+					}
+					if (!lb.isEmpty()) {
+						*customLabels = true;
+						labels.insert(nodeName, lb);
+					}
+					if (!l2.isEmpty()) {
+						*customLabels = true;
+						labels.insert(getOppositeNodeName(nodeName), l2);
+					}
 
-                //We check to see if the node ended in a "+" or "-".
-                //If so, we assume that is giving the orientation and leave it.
-                //And if it doesn't end in a "+" or "-", we assume "+" and add
-                //that to the node name.
-                QString lastChar = nodeName.right(1);
-                if (lastChar != "+" && lastChar != "-")
-                    nodeName += "+";
+					DeBruijnNode * node = new DeBruijnNode(nodeName, nodeDepth, sequence, length);
+					m_deBruijnGraphNodes.insert(nodeName, node);
+				}
+				//Lines beginning with "L" are link (edge) lines
+				else if (lineParts.at(0) == "L") {
+					//Edges aren't made now, in case their sequence hasn't yet been specified.
+					//Instead, we save the starting and ending nodes and make the edges after
+					//we're done looking at the file.
 
-                // Canu nodes start with "tig" which we can remove for simplicity.
-                nodeName = simplifyCanuNodeName(nodeName);
+					if (lineParts.size() < 6)
+						throw "load error";
 
-                //Save custom colours and labels to be applied later, after
-                //reverse complement nodes are built.
-                if (cl.isValid()) {
-                    *customColours = true;
-                    colours.insert(nodeName, cl);
-                }
-                if (c2.isValid()) {
-                    *customColours = true;
-                    colours.insert(getOppositeNodeName(nodeName), c2);
-                }
-                if (!lb.isEmpty()) {
-                    *customLabels = true;
-                    labels.insert(nodeName, lb);
-                }
-                if (!l2.isEmpty()) {
-                    *customLabels = true;
-                    labels.insert(getOppositeNodeName(nodeName), l2);
-                }
+					//Parts 1 and 3 hold the node names and parts 2 and 4 hold the corresponding +/-.
+					QString startingNode = lineParts.at(1) + lineParts.at(2);
+					QString endingNode = lineParts.at(3) + lineParts.at(4);
+					startingNode = simplifyCanuNodeName(startingNode);
+					endingNode = simplifyCanuNodeName(endingNode);
+					edgeStartingNodeNames.push_back(startingNode);
+					edgeEndingNodeNames.push_back(endingNode);
 
-                DeBruijnNode * node = new DeBruijnNode(nodeName, nodeDepth, sequence, length);
-                m_deBruijnGraphNodes.insert(nodeName, node);
-            }
+					//Part 5 holds the node overlap cigar string.  A "*" means unspecified, so
+					//we 0 for that.
+					QString cigar = lineParts.at(5);
+					if (cigar == "*")
+						edgeOverlaps.push_back(0);
+					if (cigarContainsOnlyM(cigar))
+						edgeOverlaps.push_back(getLengthFromSimpleCigar(cigar));
+					else {
+						edgeOverlaps.push_back(getLengthFromCigar(cigar));
+						*unsupportedCigar = true;
+					}
+				} 
+			}
+		} else if (gfa_vn > 1.0 && gfa_vn <= 2.0) {
+			//load gfa2
+			while (!in.atEnd()) {
+				QApplication::processEvents();
+				QString line = in.readLine();
 
-            //Lines beginning with "L" are link (edge) lines
-            else if (lineParts.at(0) == "L") {
-                //Edges aren't made now, in case their sequence hasn't yet been specified.
-                //Instead, we save the starting and ending nodes and make the edges after
-                //we're done looking at the file.
+				QStringList lineParts = line.split(QRegExp("\t"));
 
-                if (lineParts.size() < 6)
-                    throw "load error";
+				if (lineParts.size() < 1)
+					continue;
 
-                //Parts 1 and 3 hold the node names and parts 2 and 4 hold the corresponding +/-.
-                QString startingNode = lineParts.at(1) + lineParts.at(2);
-                QString endingNode = lineParts.at(3) + lineParts.at(4);
-                startingNode = simplifyCanuNodeName(startingNode);
-                endingNode = simplifyCanuNodeName(endingNode);
-                edgeStartingNodeNames.push_back(startingNode);
-                edgeEndingNodeNames.push_back(endingNode);
+				//Lines beginning with "H" are header lines.
 
-                //Part 5 holds the node overlap cigar string.  A "*" means unspecified, so
-                //we 0 for that.
-                QString cigar = lineParts.at(5);
-                if (cigar == "*")
-                    edgeOverlaps.push_back(0);
-                if (cigarContainsOnlyM(cigar))
-                    edgeOverlaps.push_back(getLengthFromSimpleCigar(cigar));
-                else {
-                    edgeOverlaps.push_back(getLengthFromCigar(cigar));
-                    *unsupportedCigar = true;
-                }
-            }
-        }
+				//Lines beginning with "S" are sequence (node) lines.
+				if (lineParts.at(0) == "S") {
+					if (lineParts.size() < 4)
+						throw "load error";
+
+					QString nodeName = lineParts.at(1);
+					if (nodeName.isEmpty())
+						nodeName = "node";
+					
+					int length = lineParts.at(2).toInt();
+
+					QByteArray sequence = lineParts.at(3).toLocal8Bit();
+
+					//Get the tags.
+					bool kcFound = false, rcFound = false, fcFound = false, dpFound = false;
+					double kc = 0.0, rc = 0.0, fc = 0.0, dp = 0.0;
+					int ln = 0;
+					QString lb, l2;
+					QColor cl, c2;
+					for (int i = 3; i < lineParts.size(); ++i) {
+						QString part = lineParts.at(i);
+						if (part.size() < 6)
+							continue;
+						if (part.at(2) != ':')
+							continue;
+						QString tag = part.left(2).toUpper();
+						QString valString = part.right(part.length() - 5);
+						if (tag == "KC") {
+							kcFound = true;
+							kc = valString.toDouble();
+						}
+						if (tag == "RC") {
+							rcFound = true;
+							rc = valString.toDouble();
+						}
+						if (tag == "FC") {
+							fcFound = true;
+							fc = valString.toDouble();
+						}
+						if (tag == "DP") {
+							dpFound = true;
+							dp = valString.toDouble();
+						}
+						if (tag == "LN")
+							ln = valString.toInt();
+						if (tag == "LB")
+							lb = valString;
+						if (tag == "CL")
+							cl = QColor(valString);
+						if (tag == "L2")
+							l2 = valString;
+						if (tag == "C2")
+							c2 = QColor(valString);
+					}
+
+					//GFA can use * to indicate that the sequence is not in the
+					//file.  In this case, try to use the LN tag for length.  If
+					//that's not available, use a length of 0.
+					//If there is a sequence, then the LN tag will be ignored.
+
+					//If there is an attribute holding the depth, we'll use that.
+					//If there isn't, then we'll use 1.0.
+					//We try to load 'DP' (depth), 'KC' (k-mer count), 'RC'
+					//(read count) or 'FC'(fragment count) in that order of
+					//preference.
+					//If we use KC, RC or FC for the depth, then that is really a
+					//count, so we need to divide by the sequence length to get the
+					//depth.
+					//We also remember which tag was used so if the graph is saved
+					//we can use the same tag in the output.
+					double nodeDepth = 1.0;
+					if (dpFound) {
+						m_depthTag = "DP";
+						nodeDepth = dp;
+					}
+					else if (kcFound) {
+						m_depthTag = "KC";
+						if (length > 0)
+							nodeDepth = kc / length;
+					}
+					else if (rcFound) {
+						m_depthTag = "RC";
+						if (length > 0)
+							nodeDepth = rc / length;
+					}
+					else if (fcFound) {
+						m_depthTag = "FC";
+						if (length > 0)
+							nodeDepth = fc / length;
+					}
+
+					//We check to see if the node ended in a "+" or "-".
+					//If so, we assume that is giving the orientation and leave it.
+					//And if it doesn't end in a "+" or "-", we assume "+" and add
+					//that to the node name.
+					QString lastChar = nodeName.right(1);
+					if (lastChar != "+" && lastChar != "-")
+						nodeName += "+";
+
+					// Canu nodes start with "tig" which we can remove for simplicity.
+					nodeName = simplifyCanuNodeName(nodeName);
+
+					//Save custom colours and labels to be applied later, after
+					//reverse complement nodes are built.
+					if (cl.isValid()) {
+						*customColours = true;
+						colours.insert(nodeName, cl);
+					}
+					if (c2.isValid()) {
+						*customColours = true;
+						colours.insert(getOppositeNodeName(nodeName), c2);
+					}
+					if (!lb.isEmpty()) {
+						*customLabels = true;
+						labels.insert(nodeName, lb);
+					}
+					if (!l2.isEmpty()) {
+						*customLabels = true;
+						labels.insert(getOppositeNodeName(nodeName), l2);
+					}
+
+					DeBruijnNode * node = new DeBruijnNode(nodeName, nodeDepth, sequence, length);
+					m_deBruijnGraphNodes.insert(nodeName, node);
+					//dg30
+					} else if (lineParts.at(0) == 'E') {
+						if (lineParts.size() < 8)
+							throw "load error";
+
+						//Parts 2 and 3 hold the node names.
+						QString startingNode = lineParts.at(2);
+						QString endingNode = lineParts.at(3);
+						startingNode = simplifyCanuNodeName(startingNode);
+						endingNode = simplifyCanuNodeName(endingNode);
+						edgeStartingNodeNames.push_back(startingNode);
+						edgeEndingNodeNames.push_back(endingNode);
+
+						//Part  holds the node overlap cigar string.  A "*" means unspecified, so
+						//we 0 for that.
+						QString cigar = lineParts.at(8);
+						if (cigar == "*")
+							edgeOverlaps.push_back(0);
+						if (cigarContainsOnlyM(cigar))
+							edgeOverlaps.push_back(getLengthFromSimpleCigar(cigar));
+						else {
+							edgeOverlaps.push_back(getLengthFromCigar(cigar));
+							*unsupportedCigar = true;
+						}
+					} 
+					// dg30 code end here
+				}
+		} else 
+			throw "load error";
 
         //Pair up reverse complements, creating them if necessary.
         QMapIterator<QString, DeBruijnNode*> i(m_deBruijnGraphNodes);

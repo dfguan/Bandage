@@ -75,6 +75,7 @@ private:
     void getSelectedNodeInfo(int & selectedNodeCount, QString & selectedNodeCountText, QString & selectedNodeListText, QString & selectedNodeLengthText, QString &selectedNodeDepthText);
     QString getSelectedEdgeListText();
     std::vector<DeBruijnNode *> getNodesFromLineEdit(QLineEdit * lineEdit, bool exactMatch, std::vector<QString> * nodesNotInGraph = 0);
+    std::vector<DeBruijnNode *> getNodesFromLineEdit(QString  l, bool exactMatch, std::vector<QString> * nodesNotInGraph = 0);
     void setSceneRectangle();
     void loadGraph2(GraphFileType graphFileType, QString filename);
     void setInfoTexts();

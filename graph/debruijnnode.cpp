@@ -89,7 +89,19 @@ void DeBruijnNode::resetNode()
     m_highestDistanceInNeighbourSearch = 0;
 }
 
-
+QString DeBruijnNode::getPathString()
+{
+	int nodes_count = m_paths.size();
+	QString nodes_string = "";
+	if (nodes_count) {
+		nodes_string = m_paths[0];	
+	} 
+	for (int i = 1; i < nodes_count; ++i) {
+		nodes_string += ",";
+		nodes_string += m_paths[i];
+	}
+	return nodes_string;
+}
 void DeBruijnNode::addToOgdfGraph(ogdf::Graph * ogdfGraph, ogdf::GraphAttributes * graphAttributes,
                                   ogdf::EdgeArray<double> * edgeArray, double xPos, double yPos)
 {

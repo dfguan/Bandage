@@ -43,7 +43,7 @@
 #include <QDir>
 #include "ogdfnode.h"
 #include "../command_line/commoncommandlinefunctions.h"
-
+#include <QDebug>
 AssemblyGraph::AssemblyGraph() :
     m_kmer(0), m_contiguitySearchDone(false),
     m_sequencesLoadedFromFasta(NOT_READY)
@@ -606,6 +606,7 @@ void AssemblyGraph::buildDeBruijnGraphFromGfa(QString fullFileName, bool *unsupp
 			}
 		}
 		//QMessageBox::information(this, "VN number",QString::number(gfa_vn)); 
+		qDebug()<<gfa_vn<<endl;
 		if ( gfa_vn > 0.0  && gfa_vn <= 1.0) {
 			//load gfa1	
             while (!in.atEnd()) {
@@ -774,6 +775,13 @@ void AssemblyGraph::buildDeBruijnGraphFromGfa(QString fullFileName, bool *unsupp
 						*unsupportedCigar = true;
 					}
 				} 
+			   else if (lineParts.at(0) == "P") {
+				   if (lineParts.size() > 2) {
+						QString pathname = lineParts.at(1);
+						QString nodes_string = lineParts.at(2);
+						m_gfapaths.insert(pathname, nodes_string);
+				   }
+			   }	
 			}
 		} else if (gfa_vn > 1.0 && gfa_vn <= 2.0) {
 			//load gfa2
@@ -949,7 +957,21 @@ void AssemblyGraph::buildDeBruijnGraphFromGfa(QString fullFileName, bool *unsupp
             makeReverseComplementNodeIfNecessary(node);
         }
         pointEachNodeToItsReverseComplement();
+		//traverse 
+		QMapIterator<QString, QString> z(m_gfapaths);
+		while (z.hasNext()) {
+			z.next();
+			QString pathname = z.key();
+			QString nodes_string = z.value();
+			QStringList nodes_list = nodes_string.split(",");
+			for (int i = 0; i < nodes_list.size(); i++) {
+				QString node_name = nodes_list.at(i).trimmed();
+				if (m_deBruijnGraphNodes.contains(node_name)) {
+					m_deBruijnGraphNodes[node_name]->insert_path(pathname);
+				}
 
+			}
+		}
         //Add any custom colours or labels that were loaded.
         QMapIterator<QString, QColor> j(colours);
         while (j.hasNext()) {

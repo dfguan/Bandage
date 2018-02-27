@@ -54,7 +54,9 @@ void GraphicsItemEdge::paint(QPainter * painter, const QStyleOptionGraphicsItem 
         penColour = g_settings->selectionColour;
     else
         penColour = g_settings->edgeColour;
-    QPen edgePen(QBrush(penColour), edgeWidth, Qt::SolidLine, Qt::RoundCap);
+	
+    //QPen edgePen(QBrush(penColour), edgeWidth, Qt::SolidLine, Qt::RoundCap);
+    QPen edgePen(QBrush(QColor(255,0,0)), edgeWidth, Qt::SolidLine, Qt::RoundCap);
     painter->setPen(edgePen);
     painter->drawPath(path());
 }

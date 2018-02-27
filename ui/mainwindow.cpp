@@ -15,7 +15,7 @@
 //You should have received a copy of the GNU General Public License
 //along with Bandage.  If not, see <http://www.gnu.org/licenses/>.
 
-
+//#include <QDebug>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QFileDialog>
@@ -546,12 +546,12 @@ void MainWindow::getSelectedNodeInfo(int & selectedNodeCount, QString & selected
     selectedNodeCountText = formatIntForDisplay(selectedNodeCount);
 
     long long totalLength = 0;
-
+	selectedNodeListText = "Node(s): ";
     for (int i = 0; i < selectedNodeCount; ++i)
     {
         QString nodeName = selectedNodes[i]->getName();
 
-        //If we are in single mode, don't include +/i in the node name
+        //If we are in single mode, don't include +/- in the node name
         if (!g_settings->doubleMode)
             nodeName.chop(1);
 
@@ -561,7 +561,11 @@ void MainWindow::getSelectedNodeInfo(int & selectedNodeCount, QString & selected
 
         totalLength += selectedNodes[i]->getLength();
     }
-
+	if (selectedNodeCount == 1) {
+		selectedNodeListText += "\nPath: ";
+		selectedNodeListText += selectedNodes[0]->getPathString();	
+		//qDebug()<<selectedNodeListText;		
+	}			
     selectedNodeLengthText = formatIntForDisplay(totalLength) + " bp";
     selectedNodeDepthText = formatDepthForDisplay(g_assemblyGraph->getMeanDepth(selectedNodes));
 }
@@ -787,6 +791,10 @@ std::vector<DeBruijnNode *> MainWindow::getNodesFromLineEdit(QLineEdit * lineEdi
     return g_assemblyGraph->getNodesFromString(lineEdit->text(), exactMatch, nodesNotInGraph);
 }
 
+std::vector<DeBruijnNode *> MainWindow::getNodesFromLineEdit(QString  t, bool exactMatch, std::vector<QString> * nodesNotInGraph)
+{
+    return g_assemblyGraph->getNodesFromString(t, exactMatch, nodesNotInGraph);
+}
 
 
 
@@ -1447,7 +1455,26 @@ void MainWindow::openSettingsDialog()
 
 void MainWindow::selectUserSpecifiedNodes()
 {
-    if (g_assemblyGraph->checkIfStringHasNodes(ui->selectionSearchNodesLineEdit->text()))
+	QString node_str = ui->selectionSearchNodesLineEdit->text();
+	int len_node_str = node_str.length();
+    if (len_node_str == 0)
+    {
+        QMessageBox::information(this, "No nodes/path given", "Please enter the numbers of the nodes to find, separated by commas.");
+        return;
+    }
+	QString nodes_string = "";
+	if (node_str[0] == 'P') {
+		QString path_name = node_str.right(len_node_str-2);
+		if (g_assemblyGraph->m_gfapaths.contains(path_name)) {
+			nodes_string = g_assemblyGraph->m_gfapaths[path_name];	
+		} else {
+			QMessageBox::information(this, "No such a path", "No such a path, please only enter one path each time!");
+			return;
+		}
+	} else {
+		nodes_string = node_str.right(len_node_str - 2);
+	}	
+    if (g_assemblyGraph->checkIfStringHasNodes(nodes_string))
     {
         QMessageBox::information(this, "No starting nodes",
                                  "Please enter at least one node when drawing the graph using the 'Around node(s)' scope. "
@@ -1455,18 +1482,16 @@ void MainWindow::selectUserSpecifiedNodes()
         return;
     }
 
-    if (ui->selectionSearchNodesLineEdit->text().length() == 0)
-    {
-        QMessageBox::information(this, "No nodes given", "Please enter the numbers of the nodes to find, separated by commas.");
-        return;
-    }
 
     m_scene->blockSignals(true);
     m_scene->clearSelection();
     std::vector<QString> nodesNotInGraph;
-    std::vector<DeBruijnNode *> nodesToSelect = getNodesFromLineEdit(ui->selectionSearchNodesLineEdit,
+    std::vector<DeBruijnNode *> nodesToSelect = getNodesFromLineEdit(nodes_string,
                                                                      ui->selectionSearchNodesExactMatchRadioButton->isChecked(),
                                                                      &nodesNotInGraph);
+    //std::vector<DeBruijnNode *> nodesToSelect = getNodesFromLineEdit(ui->selectionSearchNodesLineEdit,
+                                                                     //ui->selectionSearchNodesExactMatchRadioButton->isChecked(),
+                                                                     //&nodesNotInGraph);
 
     //Select each node that actually has a GraphicsItemNode, and build a bounding
     //rectangle so the viewport can focus on the selected node.

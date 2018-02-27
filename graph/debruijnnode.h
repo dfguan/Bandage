@@ -126,9 +126,12 @@ public:
     void clearCsvData() {m_csvData.clear();}
     void setDepth(double newDepth) {m_depth = newDepth;}
     void setName(QString newName) {m_name = newName;}
+	void insert_path(QString p) {m_paths.push_back(p);}
+	QString getPathString();
 
 private:
     QString m_name;
+
     double m_depth;
     double m_depthRelativeToMeanDrawnDepth;
     QByteArray m_sequence;
@@ -138,7 +141,8 @@ private:
     OgdfNode * m_ogdfNode;
     GraphicsItemNode * m_graphicsItemNode;
     std::vector<DeBruijnEdge *> m_edges;
-    bool m_specialNode;
+	std::vector<QString> m_paths;
+	bool m_specialNode;
     bool m_drawn;
     int m_highestDistanceInNeighbourSearch;
     QColor m_customColour;

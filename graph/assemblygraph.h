@@ -53,7 +53,9 @@ public:
     ogdf::Graph * m_ogdfGraph;
     ogdf::EdgeArray<double> * m_edgeArray;
     ogdf::GraphAttributes * m_graphAttributes;
-
+	//dg30 code here
+	QMap<QString, QString> m_gfapaths;
+	//dg30 code ends here
     int m_kmer;
     int m_nodeCount;
     int m_edgeCount;

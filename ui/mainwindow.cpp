@@ -585,6 +585,9 @@ QString MainWindow::getSelectedEdgeListText()
         edgeText += selectedEdges[i]->getStartingNode()->getName();
         edgeText += " to ";
         edgeText += selectedEdges[i]->getEndingNode()->getName();
+		edgeText += " ol: "; 
+		edgeText += QString::number(selectedEdges[i]->getOverlap()); 
+		edgeText += " ci:" + selectedEdges[i]->getEdgePath(); 
         if (i != selectedEdges.size() - 1)
             edgeText += ", ";
     }

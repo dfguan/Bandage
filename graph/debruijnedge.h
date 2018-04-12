@@ -29,11 +29,13 @@ class DeBruijnEdge
 public:
     //CREATORS
     DeBruijnEdge(DeBruijnNode * startingNode, DeBruijnNode * endingNode);
+    DeBruijnEdge(DeBruijnNode * startingNode, DeBruijnNode * endingNode, QString p);
 
     //ACCESSORS
     bool isStartingNode(DeBruijnNode * node) const {return node == m_startingNode;}
     DeBruijnNode * getStartingNode() const {return m_startingNode;}
     DeBruijnNode * getEndingNode() const {return m_endingNode;}
+	QString getEdgePath();
     GraphicsItemEdge * getGraphicsItemEdge() const {return m_graphicsItemEdge;}
     DeBruijnEdge * getReverseComplement() const {return m_reverseComplement;}
     bool isDrawn() const {return m_drawn;}
@@ -76,7 +78,9 @@ private:
     bool m_drawn;
     EdgeOverlapType m_overlapType;
     int m_overlap;
-
+	//dg30
+	QString m_path;	
+	//dg30
     bool edgeIsVisible() const;
     int timesNodeInPath(DeBruijnNode * node, std::vector<DeBruijnNode *> * path) const;
     std::vector<DeBruijnEdge *> findNextEdgesInPath(DeBruijnNode * nextNode,

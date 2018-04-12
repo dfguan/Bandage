@@ -27,10 +27,15 @@
 
 DeBruijnEdge::DeBruijnEdge(DeBruijnNode *startingNode, DeBruijnNode *endingNode) :
     m_startingNode(startingNode), m_endingNode(endingNode), m_graphicsItemEdge(0),
-    m_drawn(false), m_overlapType(UNKNOWN_OVERLAP), m_overlap(0)
+    m_drawn(false), m_overlapType(UNKNOWN_OVERLAP), m_overlap(0),m_path("")
 {
 }
 
+DeBruijnEdge::DeBruijnEdge(DeBruijnNode *startingNode, DeBruijnNode *endingNode, QString p) :
+    m_startingNode(startingNode), m_endingNode(endingNode), m_graphicsItemEdge(0),
+    m_drawn(false), m_overlapType(UNKNOWN_OVERLAP), m_overlap(0), m_path(p)
+{
+}
 
 
 //This function assumes that the parameter node pointer is one of the two nodes
@@ -42,6 +47,13 @@ DeBruijnNode * DeBruijnEdge::getOtherNode(const DeBruijnNode * node) const
     else
         return m_startingNode;
 }
+
+//dg30 get path
+QString DeBruijnEdge::getEdgePath()
+{
+	return m_path;
+}
+
 
 
 //This function determines whether the edge should be drawn to the screen.

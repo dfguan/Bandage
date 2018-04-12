@@ -27,7 +27,7 @@
 #include <set>
 #include <QApplication>
 #include <QSet>
-
+#include <QDebug>
 
 //The length parameter is optional.  If it is set, then the node will use that
 //for its length.  If not set, it will just use the sequence length.
@@ -120,7 +120,7 @@ void DeBruijnNode::addToOgdfGraph(ogdf::Graph * ogdfGraph, ogdf::GraphAttributes
     int numberOfGraphEdges = getNumberOfOgdfGraphEdges(drawnNodeLength);
     int numberOfGraphNodes = numberOfGraphEdges + 1;
     double drawnLengthPerEdge = drawnNodeLength / numberOfGraphEdges;
-
+	qDebug()<<numberOfGraphEdges<<"\t"<<drawnLengthPerEdge<<endl;
     ogdf::node newNode = 0;
     ogdf::node previousNode = 0;
     for (int i = 0; i < numberOfGraphNodes; ++i)

@@ -48,12 +48,6 @@ DeBruijnNode * DeBruijnEdge::getOtherNode(const DeBruijnNode * node) const
         return m_startingNode;
 }
 
-//dg30 get path
-QString DeBruijnEdge::getEdgePath()
-{
-	return m_path;
-}
-
 
 
 //This function determines whether the edge should be drawn to the screen.

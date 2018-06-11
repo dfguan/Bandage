@@ -78,6 +78,8 @@ public:
                             EdgeOverlapType overlapType = UNKNOWN_OVERLAP);
 	void createDeBruijnEdge(QString node1Name, QString node2Name, 
 							int overlap, EdgeOverlapType overlapType, QString p);
+	void createDeBruijnEdge(QString node1Name, QString node2Name,
+                                       int overlap, EdgeOverlapType overlapType, QString p, int wt);
     void clearOgdfGraphAndResetNodes();
     static QByteArray getReverseComplement(QByteArray forwardSequence);
     void resetEdges();

@@ -87,6 +87,69 @@ void AssemblyGraph::cleanUp()
 }
 
 void AssemblyGraph::createDeBruijnEdge(QString node1Name, QString node2Name,
+                                       int overlap, EdgeOverlapType overlapType, QString p, int wt)
+{
+    QString node1Opposite = getOppositeNodeName(node1Name);
+    QString node2Opposite = getOppositeNodeName(node2Name);
+
+    //Quit if any of the nodes don't exist.
+    if (!m_deBruijnGraphNodes.contains(node1Name) ||
+            !m_deBruijnGraphNodes.contains(node2Name) ||
+            !m_deBruijnGraphNodes.contains(node1Opposite) ||
+            !m_deBruijnGraphNodes.contains(node2Opposite))
+        return;
+
+    DeBruijnNode * node1 = m_deBruijnGraphNodes[node1Name];
+    DeBruijnNode * node2 = m_deBruijnGraphNodes[node2Name];
+    DeBruijnNode * negNode1 = m_deBruijnGraphNodes[node1Opposite];
+    DeBruijnNode * negNode2 = m_deBruijnGraphNodes[node2Opposite];
+
+    //Quit if the edge already exists
+    const std::vector<DeBruijnEdge *> * edges = node1->getEdgesPointer();
+    for (size_t i = 0; i < edges->size(); ++i)
+    {
+        if ((*edges)[i]->getStartingNode() == node1 &&
+                (*edges)[i]->getEndingNode() == node2)
+            return;
+    }
+
+    //Usually, an edge has a different pair, but it is possible
+    //for an edge to be its own pair.
+    bool isOwnPair = (node1 == negNode2 && node2 == negNode1);
+
+    DeBruijnEdge * forwardEdge = new DeBruijnEdge(node1, node2);
+    DeBruijnEdge * backwardEdge;
+
+    if (isOwnPair)
+        backwardEdge = forwardEdge;
+    else
+        backwardEdge = new DeBruijnEdge(negNode2, negNode1);
+
+    forwardEdge->setReverseComplement(backwardEdge);
+    backwardEdge->setReverseComplement(forwardEdge);
+
+    forwardEdge->setOverlap(overlap);
+    backwardEdge->setOverlap(overlap);
+    forwardEdge->setOverlapType(overlapType);
+    backwardEdge->setOverlapType(overlapType);
+
+	forwardEdge->setWeight(wt);
+	backwardEdge->setWeight(wt);
+	
+	forwardEdge->setPath(p);
+	backwardEdge->setPath(p);
+
+    m_deBruijnGraphEdges.insert(QPair<DeBruijnNode*, DeBruijnNode*>(forwardEdge->getStartingNode(), forwardEdge->getEndingNode()), forwardEdge);
+    if (!isOwnPair)
+        m_deBruijnGraphEdges.insert(QPair<DeBruijnNode*, DeBruijnNode*>(backwardEdge->getStartingNode(), backwardEdge->getEndingNode()), backwardEdge);
+
+    node1->addEdge(forwardEdge);
+    node2->addEdge(forwardEdge);
+    negNode1->addEdge(backwardEdge);
+    negNode2->addEdge(backwardEdge);
+}
+
+void AssemblyGraph::createDeBruijnEdge(QString node1Name, QString node2Name,
                                        int overlap, EdgeOverlapType overlapType, QString p)
 {
     QString node1Opposite = getOppositeNodeName(node1Name);
@@ -632,6 +695,7 @@ void AssemblyGraph::buildDeBruijnGraphFromGfa(QString fullFileName, bool *unsupp
         std::vector<QString> edgeEndingNodeNames;
 		std::vector<QString> edgePath;
         std::vector<int> edgeOverlaps;
+		std::vector<int> edgeWeights;
 		double gfa_vn = -1;
 
         QMap<QString, QColor> colours;
@@ -832,6 +896,8 @@ void AssemblyGraph::buildDeBruijnGraphFromGfa(QString fullFileName, bool *unsupp
 						*unsupportedCigar = true;
 					}
 					//dg30
+					edgePath.push_back("");
+					edgeWeights.push_back(-1);
 					for (int i = 6; i < lineParts.size(); ++i) {
 						QString part = lineParts.at(i);
 						if (part.size() < 6)
@@ -840,10 +906,19 @@ void AssemblyGraph::buildDeBruijnGraphFromGfa(QString fullFileName, bool *unsupp
 							continue;
 						QString tag = part.left(2).toUpper();
 						QString valString = part.right(part.length() - 5);
-						if (tag == "CI") 
-							edgePath.push_back(valString);	
+						if (tag == "CI") {
+						   if (edgePath.back() == "")	
+								edgePath.back() = valString; //wrong when there is one edge belong to more than two contigs						
+							else	  
+							   edgePath.back() += "," + valString;	
+						}
 						else if (tag == "OL") 
 							edgeOverlaps.back() = valString.toInt();
+						else if (tag == "WT") {
+							//qDebug() << "found" <<endl;
+							edgeWeights.back() = valString.toInt();
+								
+						} 
 					}
 				} 
 			   else if (lineParts.at(0) == "P") {
@@ -1014,9 +1089,31 @@ void AssemblyGraph::buildDeBruijnGraphFromGfa(QString fullFileName, bool *unsupp
 							edgeOverlaps.push_back(getLengthFromCigar(cigar));
 							*unsupportedCigar = true;
 						}
-					} 
-					// dg30 code end here
+						//dg30 code start here
+						edgePath.push_back("");
+						edgeWeights.push_back(-1); //not set
+						for (int i = 6; i < lineParts.size(); ++i) {
+							QString part = lineParts.at(i);
+							if (part.size() < 6)
+								continue;
+							if (part.at(2) != ':')
+								continue;
+							QString tag = part.left(2).toUpper();
+							QString valString = part.right(part.length() - 5);
+							if (tag == "CI") {
+							   if (edgePath.back() == "")	
+									edgePath.back() = valString; //wrong when there is one edge belong to more than two contigs						
+								else	  
+								   edgePath.back() += "," + valString;	
+							}
+							else if (tag == "OL") 
+								edgeOverlaps.back() = valString.toInt();
+							else if (tag == "WT")
+								edgeWeights.back() = valString.toInt();
+						}
+						// dg30 code end here
 				}
+			}
 		} else 
 			throw "load error";
 
@@ -1064,10 +1161,8 @@ void AssemblyGraph::buildDeBruijnGraphFromGfa(QString fullFileName, bool *unsupp
             QString node1Name = edgeStartingNodeNames[i];
             QString node2Name = edgeEndingNodeNames[i];
             int overlap = edgeOverlaps[i];
-			if (i < edgePath.size()) {
-				createDeBruijnEdge(node1Name, node2Name, overlap, EXACT_OVERLAP, edgePath[i]);	
-			} else 
-				createDeBruijnEdge(node1Name, node2Name, overlap, EXACT_OVERLAP);
+			createDeBruijnEdge(node1Name, node2Name, overlap, EXACT_OVERLAP, edgePath[i], edgeWeights[i]);	
+			//createDeBruijnEdge(node1Name, node2Name, overlap, EXACT_OVERLAP);
         }
     }
 

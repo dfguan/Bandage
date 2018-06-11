@@ -35,12 +35,13 @@ public:
     bool isStartingNode(DeBruijnNode * node) const {return node == m_startingNode;}
     DeBruijnNode * getStartingNode() const {return m_startingNode;}
     DeBruijnNode * getEndingNode() const {return m_endingNode;}
-	QString getEdgePath();
     GraphicsItemEdge * getGraphicsItemEdge() const {return m_graphicsItemEdge;}
     DeBruijnEdge * getReverseComplement() const {return m_reverseComplement;}
     bool isDrawn() const {return m_drawn;}
     int getOverlap() const {return m_overlap;}
-    EdgeOverlapType getOverlapType() const {return m_overlapType;}
+    int getWeight() const {return m_wgt;}
+	QString getEdgePath() const { return m_path;}
+	EdgeOverlapType getOverlapType() const {return m_overlapType;}
     DeBruijnNode * getOtherNode(const DeBruijnNode * node) const;
     bool testExactOverlap(int overlap) const;
     void tracePaths(bool forward,
@@ -64,7 +65,9 @@ public:
     void setReverseComplement(DeBruijnEdge * rc) {m_reverseComplement = rc;}
     void setOverlap(int ol) {m_overlap = ol;}
     void setOverlapType(EdgeOverlapType olt) {m_overlapType = olt;}
-    void reset() {m_graphicsItemEdge = 0; m_drawn = false;}
+    void setWeight(int w) {m_wgt = w;}
+	void setPath(QString p) {m_path = p;}
+	void reset() {m_graphicsItemEdge = 0; m_drawn = false;}
     void determineIfDrawn() {m_drawn = edgeIsVisible();}
     void setExactOverlap(int overlap) {m_overlap = overlap; m_overlapType = EXACT_OVERLAP;}
     void autoDetermineExactOverlap();
@@ -80,6 +83,7 @@ private:
     int m_overlap;
 	//dg30
 	QString m_path;	
+	int m_wgt; //weight
 	//dg30
     bool edgeIsVisible() const;
     int timesNodeInPath(DeBruijnNode * node, std::vector<DeBruijnNode *> * path) const;

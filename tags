@@ -245,6 +245,7 @@ DVector	ogdf/basic/geometry.h	/^	DVector(const DVector &dv) : DPoint(dv) { }$/;"
 DVector	ogdf/basic/geometry.h	/^	DVector(double x, double y) : DPoint(x, y) { }$/;"	f	class:ogdf::DVector
 DVector	ogdf/basic/geometry.h	/^class OGDF_EXPORT DVector : public DPoint {$/;"	c	namespace:ogdf
 DeBruijnEdge	graph/debruijnedge.cpp	/^DeBruijnEdge::DeBruijnEdge(DeBruijnNode *startingNode, DeBruijnNode *endingNode) :$/;"	f	class:DeBruijnEdge
+DeBruijnEdge	graph/debruijnedge.cpp	/^DeBruijnEdge::DeBruijnEdge(DeBruijnNode *startingNode, DeBruijnNode *endingNode, QString p) :$/;"	f	class:DeBruijnEdge
 DeBruijnEdge	graph/debruijnedge.h	/^class DeBruijnEdge$/;"	c
 DeBruijnNode	graph/debruijnnode.cpp	/^DeBruijnNode::DeBruijnNode(QString name, double depth, QByteArray sequence, int length) :$/;"	f	class:DeBruijnNode
 DeBruijnNode	graph/debruijnnode.h	/^class DeBruijnNode$/;"	c
@@ -2312,6 +2313,7 @@ getDrawnNodeCount	graph/assemblygraph.cpp	/^int AssemblyGraph::getDrawnNodeCount
 getDrawnNodeLength	graph/debruijnnode.cpp	/^double DeBruijnNode::getDrawnNodeLength() const$/;"	f	class:DeBruijnNode
 getEdge	ogdf/internal/energybased/MultilevelGraph.cpp	/^edge MultilevelGraph::getEdge(unsigned int index)$/;"	f	class:ogdf::MultilevelGraph
 getEdgeFromNodeNames	tests/bandagetests.cpp	/^DeBruijnEdge * BandageTests::getEdgeFromNodeNames(QString startingNodeName,$/;"	f	class:BandageTests
+getEdgePath	graph/debruijnedge.cpp	/^QString DeBruijnEdge::getEdgePath()$/;"	f	class:DeBruijnEdge
 getEdges	graph/path.h	/^    QList<DeBruijnEdge *> getEdges() const {return m_edges;}$/;"	f	class:Path
 getEdgesPointer	graph/debruijnnode.h	/^    const std::vector<DeBruijnEdge *> * getEdgesPointer() const {return &m_edges;}$/;"	f	class:DeBruijnNode
 getElapsedTime	command_line/commoncommandlinefunctions.cpp	/^QString getElapsedTime(QDateTime start, QDateTime end)$/;"	f
@@ -2440,6 +2442,7 @@ getNodes	ogdf/cluster/ClusterGraph.h	/^	List<node> &getNodes(){$/;"	f	class:ogdf
 getNodesCommonToAllPaths	graph/debruijnnode.cpp	/^std::vector<DeBruijnNode *> DeBruijnNode::getNodesCommonToAllPaths(std::vector< std::vector <DeBruijnNode *> > * paths,$/;"	f	class:DeBruijnNode
 getNodesFromBlastHits	graph/assemblygraph.cpp	/^std::vector<DeBruijnNode *> AssemblyGraph::getNodesFromBlastHits(QString queryName)$/;"	f	class:AssemblyGraph
 getNodesFromLineEdit	ui/mainwindow.cpp	/^std::vector<DeBruijnNode *> MainWindow::getNodesFromLineEdit(QLineEdit * lineEdit, bool exactMatch, std::vector<QString> * nodesNotInGraph)$/;"	f	class:MainWindow
+getNodesFromLineEdit	ui/mainwindow.cpp	/^std::vector<DeBruijnNode *> MainWindow::getNodesFromLineEdit(QString  t, bool exactMatch, std::vector<QString> * nodesNotInGraph)$/;"	f	class:MainWindow
 getNodesFromListExact	graph/assemblygraph.cpp	/^std::vector<DeBruijnNode *> AssemblyGraph::getNodesFromListExact(QStringList nodesList,$/;"	f	class:AssemblyGraph
 getNodesFromListPartial	graph/assemblygraph.cpp	/^std::vector<DeBruijnNode *> AssemblyGraph::getNodesFromListPartial(QStringList nodesList,$/;"	f	class:AssemblyGraph
 getNodesFromString	graph/assemblygraph.cpp	/^std::vector<DeBruijnNode *> AssemblyGraph::getNodesFromString(QString nodeNamesString, bool exactMatch, std::vector<QString> * nodesNotInGraph)$/;"	f	class:AssemblyGraph
@@ -2461,6 +2464,7 @@ getPath	blast/blastquerypath.h	/^    Path getPath() const {return m_path;}$/;"	f
 getPathCount	blast/blastquery.h	/^    int getPathCount() const {return m_paths.size();}$/;"	f	class:BlastQuery
 getPathQueryCoverage	blast/blastquerypath.cpp	/^double BlastQueryPath::getPathQueryCoverage() const$/;"	f	class:BlastQueryPath
 getPathSequence	graph/path.cpp	/^QByteArray Path::getPathSequence() const$/;"	f	class:Path
+getPathString	graph/debruijnnode.cpp	/^QString DeBruijnNode::getPathString()$/;"	f	class:DeBruijnNode
 getPaths	blast/blastquery.h	/^    QList<BlastQueryPath> getPaths() const {return m_paths;}$/;"	f	class:BlastQuery
 getPosition	graph/graphlocation.h	/^    int getPosition() const {return m_position;}$/;"	f	class:GraphLocation
 getPresetColours	program/globals.cpp	/^std::vector<QColor> getPresetColours()$/;"	f
@@ -2854,6 +2858,7 @@ insertEdgePath	ogdf/basic/GraphCopy.cpp	/^void GraphCopy::insertEdgePath(node sr
 insertEdgePathEmbedded	ogdf/basic/GraphCopy.cpp	/^void GraphCopy::insertEdgePathEmbedded($/;"	f	class:ogdf::GraphCopy
 insertPoint	ogdf/basic/geometry.cpp	/^ListIterator<DPoint> DPolygon::insertPoint($/;"	f	class:ogdf::DPolygon
 insertPoint	ogdf/basic/geometry.h	/^	ListIterator<DPoint> insertPoint(const DPoint &p) {$/;"	f	class:ogdf::DPolygon
+insert_path	graph/debruijnnode.h	/^	void insert_path(QString p) {m_paths.push_back(p);}$/;"	f	class:DeBruijnNode
 intToImageAlignment	ogdf/basic/GraphAttributes.h	/^	static ImageAlignment intToImageAlignment(int i) {$/;"	f	class:ogdf::GraphAttributes
 intToImageStyle	ogdf/basic/GraphAttributes.h	/^	static ImageStyle intToImageStyle(int i) {$/;"	f	class:ogdf::GraphAttributes
 intToPattern	ogdf/basic/GraphAttributes.h	/^	static BrushPattern intToPattern(int i) {$/;"	f	class:ogdf::GraphAttributes
@@ -3255,6 +3260,7 @@ m_forceScalingFactor	ogdf/energybased/FMMMLayout.h	/^	double                m_fo
 m_frGridQuotient	ogdf/energybased/FMMMLayout.h	/^	int                   m_frGridQuotient; \/\/!< The grid quotient.$/;"	m	class:ogdf::FMMMLayout
 m_from	ogdf/basic/geometry.h	/^	const DRect *m_from; \/\/!< Rectangluar area in source coordinate system.$/;"	m	class:ogdf::DScaler
 m_galaxyChoice	ogdf/energybased/FMMMLayout.h	/^	GalaxyChoice          m_galaxyChoice; \/\/!< The selection of galaxy nodes.$/;"	m	class:ogdf::FMMMLayout
+m_gfapaths	graph/assemblygraph.h	/^	QMap<QString, QString> m_gfapaths;$/;"	m	class:AssemblyGraph
 m_grabIndex	graph/graphicsitemnode.h	/^    size_t m_grabIndex;$/;"	m	class:GraphicsItemNode
 m_graphAttributes	graph/assemblygraph.h	/^    ogdf::GraphAttributes * m_graphAttributes;$/;"	m	class:AssemblyGraph
 m_graphAttributes	program/graphlayoutworker.h	/^    ogdf::GraphAttributes * m_graphAttributes;$/;"	m	class:GraphLayoutWorker
@@ -3513,11 +3519,13 @@ m_pageRatio	ogdf/energybased/FMMMLayout.h	/^	double                m_pageRatio; 
 m_parameters	blast/runblastsearchworker.h	/^    QString m_parameters;$/;"	m	class:RunBlastSearchWorker
 m_parent	ogdf/cluster/ClusterGraph.h	/^	ClusterElement			*m_parent;    \/\/!< The parent of this cluster.$/;"	m	class:ogdf::ClusterElement
 m_path	blast/blastquerypath.h	/^    Path m_path;$/;"	m	class:BlastQueryPath
+m_path	graph/debruijnedge.h	/^	QString m_path;	$/;"	m	class:DeBruijnEdge
 m_path	graph/graphicsitemnode.h	/^    QPainterPath m_path;$/;"	m	class:GraphicsItemNode
 m_path	graph/querydistance.h	/^    Path m_path;$/;"	m	class:QueryDistance
 m_pathCount	ui/querypathspushbutton.h	/^    int m_pathCount;$/;"	m	class:QueryPathsPushButton
 m_pathSequence	ui/querypathsequencecopybutton.h	/^    QByteArray m_pathSequence;$/;"	m	class:QueryPathSequenceCopyButton
 m_paths	blast/blastquery.h	/^    QList<BlastQueryPath> m_paths;$/;"	m	class:BlastQuery
+m_paths	graph/debruijnnode.h	/^	std::vector<QString> m_paths;$/;"	m	class:DeBruijnNode
 m_pattern	ogdf/fileformats/OgmlParser.cpp	/^	GraphAttributes::BrushPattern m_pattern;$/;"	m	struct:ogdf::OgmlParser::OgmlNodeTemplate	file:
 m_patternColor	ogdf/fileformats/OgmlParser.cpp	/^	String  m_patternColor;$/;"	m	struct:ogdf::OgmlParser::OgmlNodeTemplate	file:
 m_percentIdentity	blast/blasthit.h	/^    double m_percentIdentity;$/;"	m	class:BlastHit
@@ -3592,7 +3600,7 @@ m_smallFirstColumn	ui/mytablewidget.h	/^    bool m_smallFirstColumn;$/;"	m	class
 m_smallSecondColumn	ui/mytablewidget.h	/^    bool m_smallSecondColumn;$/;"	m	class:MyTableWidget
 m_source	ogdf/internal/energybased/MultilevelGraph.h	/^	std::map<int, int> m_source;$/;"	m	struct:ogdf::NodeMerge
 m_sourceType	ogdf/fileformats/OgmlParser.cpp	/^	int m_sourceType; \/\/ actually this is only a boolean value 0 or 1$/;"	m	struct:ogdf::OgmlParser::OgmlEdgeTemplate	file:
-m_specialNode	graph/debruijnnode.h	/^    bool m_specialNode;$/;"	m	class:DeBruijnNode
+m_specialNode	graph/debruijnnode.h	/^	bool m_specialNode;$/;"	m	class:DeBruijnNode
 m_springStrength	ogdf/energybased/FMMMLayout.h	/^	double                m_springStrength; \/\/!< The strengths of springs.$/;"	m	class:ogdf::FMMMLayout
 m_src	ogdf/basic/Graph_d.h	/^	node m_src; \/\/!< The source node of the edge.$/;"	m	class:ogdf::EdgeElement
 m_start	ogdf/basic/geometry.h	/^	DPoint m_start; \/\/!< The start point of the line.$/;"	m	class:ogdf::DLine
@@ -3649,6 +3657,7 @@ m_vpStart	ogdf/basic/Array2D.h	/^	E   *m_vpStart; \/\/!< The virtual start of th
 m_w	ogdf/cluster/ClusterGraphAttributes.h	/^			double m_w, m_h; \/\/width and height$/;"	m	class:ogdf::ClusterInfo
 m_wAncestor	ogdf/cluster/ClusterGraph.h	/^	mutable ClusterArray<cluster>* m_wAncestor;\/\/!< Used to save last search run number for commoncluster.$/;"	m	class:ogdf::ClusterGraph
 m_weight	ogdf/internal/energybased/MultilevelGraph.h	/^	EdgeArray<double> m_weight;$/;"	m	class:ogdf::MultilevelGraph
+m_wgt	graph/debruijnedge.h	/^	int m_wgt; \/\/weight$/;"	m	class:DeBruijnEdge
 m_width	graph/graphicsitemnode.h	/^    double m_width;$/;"	m	class:GraphicsItemNode
 m_width	ogdf/basic/GraphAttributes.h	/^	NodeArray<double> m_width; \/\/!< width of a node's bounding box$/;"	m	class:ogdf::GraphAttributes
 m_width	ogdf/fileformats/OgmlParser.cpp	/^	double  m_width;$/;"	m	struct:ogdf::OgmlParser::OgmlNodeTemplate	file:
@@ -3678,6 +3687,7 @@ m_y	ogdf/cluster/ClusterGraphAttributes.h	/^			double m_x, m_y; \/\/position of 
 m_zoom	ui/mygraphicsview.h	/^    GraphicsViewZoom * m_zoom;$/;"	m	class:MyGraphicsView
 m_zoomFactorBase	ui/graphicsviewzoom.h	/^    double m_zoomFactorBase;$/;"	m	class:GraphicsViewZoom
 main	program/main.cpp	/^int main(int argc, char *argv[])$/;"	f
+main	test.cpp	/^int main()$/;"	f
 makeAcyclic	ogdf/basic/simple_graph_alg.cpp	/^void makeAcyclic(Graph &G)$/;"	f	namespace:ogdf
 makeAcyclicByReverse	ogdf/basic/simple_graph_alg.cpp	/^void makeAcyclicByReverse(Graph &G)$/;"	f	namespace:ogdf
 makeAdjEntries	ogdf/cluster/ClusterGraph.h	/^	void makeAdjEntries(cluster c,LISTITERATOR start){$/;"	f	class:ogdf::ClusterGraph
@@ -4646,7 +4656,7 @@ reregister	ogdf/basic/GraphObserver.h	/^	void reregister(const Graph *pG) {$/;"	
 reregister	ogdf/basic/NodeArray.h	/^	void reregister(const Graph *pG) {$/;"	f	class:ogdf::NodeArrayBase
 reregister	ogdf/cluster/ClusterArray.h	/^	void reregister(const ClusterGraph *pC) {$/;"	f	class:ogdf::ClusterArrayBase
 reregister	ogdf/cluster/ClusterGraphObserver.h	/^	void reregister(const ClusterGraph *pCG) {$/;"	f	class:ogdf::ClusterGraphObserver
-reset	graph/debruijnedge.h	/^    void reset() {m_graphicsItemEdge = 0; m_drawn = false;}$/;"	f	class:DeBruijnEdge
+reset	graph/debruijnedge.h	/^	void reset() {m_graphicsItemEdge = 0; m_drawn = false;}$/;"	f	class:DeBruijnEdge
 resetAdjEntryIndex	ogdf/basic/Graph.cpp	/^void Graph::resetAdjEntryIndex(int newIndex, int oldIndex)$/;"	f	class:ogdf::Graph
 resetAllNodeColours	graph/assemblygraph.cpp	/^void AssemblyGraph::resetAllNodeColours()$/;"	f	class:AssemblyGraph
 resetContiguityStatus	graph/debruijnnode.h	/^    void resetContiguityStatus() {m_contiguityStatus = NOT_CONTIGUOUS;}$/;"	f	class:DeBruijnNode
@@ -4872,6 +4882,7 @@ setOneWidgetFromSetting	ui/settingsdialog.cpp	/^void setOneWidgetFromSetting(boo
 setOriginalEmbedding	ogdf/basic/GraphCopy.cpp	/^void GraphCopy::setOriginalEmbedding()$/;"	f	class:ogdf::GraphCopy
 setOverlap	graph/debruijnedge.h	/^    void setOverlap(int ol) {m_overlap = ol;}$/;"	f	class:DeBruijnEdge
 setOverlapType	graph/debruijnedge.h	/^    void setOverlapType(EdgeOverlapType olt) {m_overlapType = olt;}$/;"	f	class:DeBruijnEdge
+setPath	graph/debruijnedge.h	/^	void setPath(QString p) {m_path = p;}$/;"	f	class:DeBruijnEdge
 setPathValidityUiElements	ui/pathspecifydialog.cpp	/^void PathSpecifyDialog::setPathValidityUiElements(bool pathValid)$/;"	f	class:PathSpecifyDialog
 setReverseComplement	graph/debruijnedge.h	/^    void setReverseComplement(DeBruijnEdge * rc) {m_reverseComplement = rc;}$/;"	f	class:DeBruijnEdge
 setReverseComplement	graph/debruijnnode.h	/^    void setReverseComplement(DeBruijnNode * rc) {m_reverseComplement = rc;}$/;"	f	class:DeBruijnNode
@@ -4895,6 +4906,7 @@ setUpdateDepth	ogdf/cluster/ClusterGraph.h	/^	void setUpdateDepth(bool b) const$
 setValid	ogdf/fileformats/DinoXmlParser.h	/^		void setValid() const {$/;"	f	struct:ogdf::XmlTagObject
 setValid	ogdf/fileformats/DinoXmlParser.h	/^		void setValid() {$/;"	f	struct:ogdf::XmlAttributeObject
 setValue	ui/myprogressdialog.cpp	/^void MyProgressDialog::setValue(int value)$/;"	f	class:MyProgressDialog
+setWeight	graph/debruijnedge.h	/^    void setWeight(int w) {m_wgt = w;}$/;"	f	class:DeBruijnEdge
 setWidgetsFromSettings	ui/blasthitfiltersdialog.cpp	/^void BlastHitFiltersDialog::setWidgetsFromSettings()$/;"	f	class:BlastHitFiltersDialog
 setWidgetsFromSettings	ui/mainwindow.cpp	/^void MainWindow::setWidgetsFromSettings()$/;"	f	class:MainWindow
 setWidgetsFromSettings	ui/settingsdialog.cpp	/^void SettingsDialog::setWidgetsFromSettings()$/;"	f	class:SettingsDialog
